@@ -14,6 +14,10 @@ dt-launchfile-init
 
 # launching app
 roslaunch perception perception.launch veh:=$VEHICLE_NAME
+
+roslaunch imu_driver imu_driver.launch veh:=$VEHICLE_NAME
+
+docker -H duck7.local run --name duckiebot-interface -v /data:/data --privileged --network=host -dit --restart unless-stopped -e ROBOT_TYPE=<ROBOT_TYPE> duckietown/duckiebot-interface:daffy-arm32v7
 # rosrun controls controls.launch
 
 
