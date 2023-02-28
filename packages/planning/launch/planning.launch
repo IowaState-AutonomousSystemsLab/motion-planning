@@ -1,0 +1,9 @@
+<launch>
+    <group ns="$(arg veh)">
+
+        <node pkg="planning" type="pose_list_node.py"
+              name="pose_list" output="screen">
+        </node>
+    </group>
+
+</launch>
