@@ -3,6 +3,8 @@
 
         <node pkg="planning" type="pose_list_node.py"
               name="pose_list" output="screen">
+            <remap from="~/pose_list"
+                     to="/$(arg veh)/pose_list"/>
         </node>
     </group>
 
