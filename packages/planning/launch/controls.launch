@@ -1,0 +1,6 @@
+<launch>
+
+    <!-- Template  Remove -->
+    <!-- <node pkg="perception" type="perception.py" name="perception"  output="screen"/> -->
+
+</launch>
