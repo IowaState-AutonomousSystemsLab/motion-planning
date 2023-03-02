@@ -14,6 +14,13 @@ class PoseListNode(DTROS):
     def __init__(self, node_name) -> None:
         super(PoseListNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         self.pose_list = []
+
+        example_pose = Pose()
+        example_pose.ID = 0
+        example_pose.x = 0
+        example_pose.y = 0
+        example_pose.heading = 0
+        self.pose_list.append(example_pose)
         self.pub = rospy.Publisher('pose_list', String, queue_size=10)
 
     def add_pose(self, pose: Pose):
