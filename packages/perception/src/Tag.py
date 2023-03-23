@@ -2,6 +2,8 @@ from enum import Enum
 from Position import Position
 
 TILE_LENGTH_CM = 57
+DISTANCE_FROM_TILE_EDGE =
+
 
 class Tag:
     def __init__(self, april_tag_id: int, coord: tuple[int, int], position: Position, rotation: int):
@@ -25,17 +27,16 @@ class Tag:
         y_retval = -1
 
         if self.position == Position.top_left:
-            pass
-            # x = self.tag_x_pos - 1
-            # y =
+            x = self.tag_x_pos - 1 * TILE_LENGTH_CM
+            y = self.tag_x_pos - 1 * TILE_LENGTH_CM
         elif self.position == Position.top_right:
-            pass
+            x = self.tag_x_pos - 1 * TILE_LENGTH_CM
+            y = self.tag_x_pos - 1 * TILE_LENGTH_CM
         elif self.position == Position.bot_right:
-            pass
+            x = self.tag_x_pos - 1 * TILE_LENGTH_CM
+            y = self.tag_x_pos - 1 * TILE_LENGTH_CM
         elif self.position == Position.bot_left:
-            pass
+            x = self.tag_x_pos - 1 * TILE_LENGTH_CM
+            y = self.tag_x_pos - 1 * TILE_LENGTH_CM
         else:
             Exception("UNKNOWN POSITION WITHIN TILE")
-
-
-
