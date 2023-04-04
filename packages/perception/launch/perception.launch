@@ -1,14 +1,19 @@
 <launch>
-    
+
     <group ns="$(arg veh)">
 
-        <node pkg="perception" type="wheel_odometry_node.py" 
-              name="wheel_odometry"  output="screen">
-              <remap from="~/right_wheel_encoder_node/tick" 
-                     to="/$(arg veh)/right_wheel_encoder_node/tick"/>
-              <remap from="~/left_wheel_encoder_node/tick" 
-                     to="/$(arg veh)/left_wheel_encoder_node/tick"/>
+        <node pkg="perception" type="wheel_odometry_node.py"
+              name="wheel_odometry" output="screen">
+            <remap from="~/right_wheel_encoder_node/tick"
+                   to="/$(arg veh)/right_wheel_encoder_node/tick"/>
+            <remap from="~/left_wheel_encoder_node/tick"
+                   to="/$(arg veh)/left_wheel_encoder_node/tick"/>
+        </node>
+        <node pkg="perception" type="april_tag_pose_estimate_node.py"
+              name="april_tag_pose_estimate" output="screen">
+            <remap from="~/april_tag_pose_estimate"
+                   to="/$(arg veh)/april_tag_pose_estimate"/>
         </node>
     </group>
-    
+
 </launch>
