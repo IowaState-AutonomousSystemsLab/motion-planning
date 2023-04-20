@@ -18,11 +18,10 @@ class ATPoseEstimateNode(DTROS):
         super(ATPoseEstimateNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         self.image = None
         self.camera_info = None
-        self.running = False
         self.distance_to_tag = -1
         self.at_detector = Detector(searchpath=['apriltags'],
                                     families='tag36h11',
-                                    nthreads=1,
+                                    nthreads=2,
                                     quad_decimate=1.0,
                                     quad_sigma=0.0,
                                     refine_edges=1,
@@ -47,34 +46,32 @@ class ATPoseEstimateNode(DTROS):
             queue_size=2,
         )
 
-    def do_pose_estimation(self, image):
-        r = rospy.Rate(1)
+    def do_pose_estimation(self):
+        r = rospy.Rate(10)
         camera_params = self.camera_info
 
         if camera_params is None:
             rospy.loginfo("Camera parameters is None!")
             return
-        detections = self.at_detector.detect(image, estimate_tag_pose=True, camera_params=camera_params, tag_size=0.065)
+        if self.image is None:
+            rospy.loginfo("Image is None!")
+            return
 
+        detections = self.at_detector.detect(self.image, estimate_tag_pose=True, camera_params=camera_params,
+                                             tag_size=0.065)
         for detection in detections:
             mtx = np.matmul(detection.pose_R, detection.pose_t)
             squares = [np.square(val) for val in mtx]
             self.distance_to_tag = sqrt(sum(squares))
-        while not rospy.is_shutdown():
-            rospy.loginfo("distance to tag: " + str(self.distance_to_tag))
-            message = self.distance_to_tag
-            self.pub_distance_to_tag.publish(message)
-            r.sleep()
-
-        self.running = False
+        rospy.loginfo("distance to tag: " + str(self.distance_to_tag))
+        message = self.distance_to_tag
+        self.pub_distance_to_tag.publish(message)
+        r.sleep()
 
     def cb_image(self, data):
-        if not self.running:
-            self.running = True
-            np_arr = np.frombuffer(data.data, np.uint8)
-            cv_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-            self.image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-            self.do_pose_estimation(self.image)
+        np_arr = np.frombuffer(data.data, np.uint8)
+        cv_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        self.image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
     def cb_camera_info(self, msg):
         if self.camera_info is None:
@@ -96,4 +93,6 @@ class ATPoseEstimateNode(DTROS):
 
 if __name__ == "__main__":
     node = ATPoseEstimateNode(node_name="april_tag_pose_estimate")
+    while not rospy.is_shutdown():
+        node.do_pose_estimation()
     rospy.spin()
