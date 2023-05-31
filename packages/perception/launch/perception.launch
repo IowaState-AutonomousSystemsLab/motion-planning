@@ -5,6 +5,11 @@
               name="april_tag_pose_estimate" output="screen">
             <remap from="~/april_tag_pose_estimate"
                    to="/$(arg veh)/april_tag_pose_estimate"/>
+
+                   <remap from="~camera_node/image/compressed"
+                   to="/$(arg veh)/camera_node/image/compressed"/>
+                   <remap from="~camera_node/camera_info"
+                   to="/$(arg veh)/camera_node/camera_info"/>
         </node>
     </group>
 

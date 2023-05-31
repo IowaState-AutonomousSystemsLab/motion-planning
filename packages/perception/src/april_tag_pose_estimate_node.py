@@ -16,6 +16,19 @@ from as_msgs.msg import Pose
 class ATPoseEstimateNode(DTROS):
     def __init__(self, node_name) -> None:
         super(ATPoseEstimateNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
+        # Some hard coded values for a csv
+        # Tag ID,x_cm,y_cm,theta
+        # 380,281.0,110.0,180
+        # 379,281.0,224.0,180
+        # 378,281.0,342.0,180
+        self.known_ids = [380, 379, 378]
+        self.known_locations = [
+            (2.810, 1.100, 180),
+            (2.810, 2.240, 180),
+            (2.810, 3.420, 180)
+        ]
+
+        self.current_location = (-1, -1)
         self.image = None
         self.camera_info = None
         self.distance_to_tag = -1
@@ -29,13 +42,13 @@ class ATPoseEstimateNode(DTROS):
                                     debug=0)
 
         self.img_sub = rospy.Subscriber(
-            f"/duck3/camera_node/image/compressed",
+            f"~camera_node/image/compressed",
             CompressedImage,
             self.cb_image,
             queue_size=2,
         )
         self.info_sub = rospy.Subscriber(
-            f"/duck3/camera_node/camera_info",
+            f"~camera_node/camera_info",
             CameraInfo,
             self.cb_camera_info,
             queue_size=2,
@@ -58,9 +71,22 @@ class ATPoseEstimateNode(DTROS):
             return
 
         detections = self.at_detector.detect(self.image, estimate_tag_pose=True, camera_params=camera_params,
-                                             tag_size=0.065)
+                                             tag_size=0.08125)
+        # april tag size is reported as 6.5 cm for full square (8x8), but april tag library wants inner square (6x6)
+        # inner 6x6 size: 0.04875
+
         for detection in detections:
+            id = detection.tag_id
+            known_id = self.known_ids.index(id)
             mtx = np.matmul(detection.pose_R, detection.pose_t)
+            if known_id >= 0:
+                x, y, theta = self.known_locations[known_id]
+
+                current_x = x + mtx[0][0]
+                current_y = y + mtx[1][0]
+
+                self.current_location = (current_x, current_y)
+            rospy.loginfo("Current location: " + str(self.current_location))
             squares = [np.square(val) for val in mtx]
             self.distance_to_tag = sqrt(sum(squares))
         rospy.loginfo("distance to tag: " + str(self.distance_to_tag))
