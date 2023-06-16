@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import time
 from datetime import datetime
 import rospy
@@ -12,6 +13,9 @@ from std_msgs.msg import String, Header, Float64
 from sensor_msgs.msg import CompressedImage, CameraInfo
 from as_msgs.msg import Pose
 
+TILE_WIDTH = 0.59
+TILE_HEIGHT = 0.59
+
 
 class ATPoseEstimateNode(DTROS):
     def __init__(self, node_name) -> None:
@@ -23,12 +27,13 @@ class ATPoseEstimateNode(DTROS):
         # 378,281.0,342.0,180
         self.known_ids = [380, 379, 378]
         self.known_locations = [
-            (2.810, 1.100, 180),
+            (2.900, 1.400, 180),
             (2.810, 2.240, 180),
             (2.810, 3.420, 180)
         ]
 
         self.current_location = (-1, -1)
+        self.current_tile = (-1, -1)
         self.image = None
         self.camera_info = None
         self.distance_to_tag = -1
@@ -74,6 +79,7 @@ class ATPoseEstimateNode(DTROS):
                                              tag_size=0.08125)
         # april tag size is reported as 6.5 cm for full square (8x8), but april tag library wants inner square (6x6)
         # inner 6x6 size: 0.04875
+        # another value is 0.08125
 
         for detection in detections:
             id = detection.tag_id
@@ -82,10 +88,15 @@ class ATPoseEstimateNode(DTROS):
             if known_id >= 0:
                 x, y, theta = self.known_locations[known_id]
 
-                current_x = x + mtx[0][0]
-                current_y = y + mtx[1][0]
-
+                current_x = x + mtx[2][0]
+                current_y = y + mtx[0][0]
+                # current_x = x - detection.pose_t[0][0]
+                # current_y = y - detection.pose_t[1][0]
+                rospy.loginfo(f"mtx: {mtx}")
+                rospy.loginfo(f"x: {x}, y: {y}")
                 self.current_location = (current_x, current_y)
+                self.current_tile = ((current_x // TILE_WIDTH), (current_y // TILE_HEIGHT))
+            rospy.loginfo("Current tile: " + str(self.current_tile))
             rospy.loginfo("Current location: " + str(self.current_location))
             squares = [np.square(val) for val in mtx]
             self.distance_to_tag = sqrt(sum(squares))
