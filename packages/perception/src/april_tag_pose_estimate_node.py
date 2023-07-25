@@ -71,7 +71,8 @@ class ATPoseEstimateNode(DTROS):
             tag = self.lookup(id)
             throttle = 1
 
-            # from some c++ code i found
+            # from some c++ code i found here:
+            # https://bitbucket.org/kaess/apriltags/src/3aea96d3239bb83870cb5e0a85f142a2b0589563/example/apriltags_demo.cpp#lines-118
             wRo = detection.pose_R
             yaw = np.radians(np.arctan2(wRo[1][0], wRo[0][0]))
             c = np.cos(yaw)
@@ -115,20 +116,23 @@ class ATPoseEstimateNode(DTROS):
     def cb_camera_info(self, msg):
         if self.camera_info is None:
             rospy.loginfo("camera info is none, setting now")
-            p_arr = np.array(msg.P).reshape(3, 4)
+            # subscribing to the ros node seems to only give default values, so the commented out portion would work if
+            # the camera parameters in the node were correct
 
-            p0 = p_arr[0][0]
-            p1 = p_arr[1][1]
-            p2 = p_arr[0][2]
-            p3 = p_arr[1][2]
-            params = (p0,  # focal center x of rectified image
-                      p1,  # focal center y of rectified image
-                      p2,  # principal point x of rectified image
-                      p3)  # principal point y of rectified image
+            # p_arr = np.array(msg.P).reshape(3, 4)
+            # p0 = p_arr[0][0]
+            # p1 = p_arr[1][1]
+            # p2 = p_arr[0][2]
+            # p3 = p_arr[1][2]
+            # params = (p0,  # focal center x of rectified image
+            #           p1,  # focal center y of rectified image
+            #           p2,  # principal point x of rectified image
+            #           p3)  # principal point y of rectified image
+            # self.camera_info = params
 
             # from duckiebot web interface:
-            # TODO see if there is a way to get this from a ros node, thought it should
-            # in theory be the same for all the duckiebots
+            # TODO see if there is a way to get this from a ros node,
+            # though it should, in theory, be the same for all the duckiebots
             duckiebot_camera_matrix = np.array(
                 [[327.7921447753906, 0.0, 334.8615555610704, 0.0],
                  [0.0, 353.49005126953125, 162.79261982972093, 0.0],
@@ -142,11 +146,16 @@ class ATPoseEstimateNode(DTROS):
             )
 
             self.camera_info = params
-            rospy.logwarn(params)
-        # for more info see https://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html
+            rospy.loginfo(f"camera params: {params}")
         # This tuple is the relevant camera parameters needed for april-tag localization
+        # for more info see https://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html
 
     def lookup(self, id):
+        """
+        lookup a tag based on the id and return the info for the tag
+        :param id: id of the tag that is being searched for
+        :return: the Tag class that has the necessary info to get the robot location
+        """
         degrees = 45
         pos = np.array([
             [2 * TILE_WIDTH],  # x in the map view
