@@ -1,47 +1,73 @@
+import csv
+import numpy as np
 from enum import Enum
-from Position import Position
 
 TILE_LENGTH_CM = 57.
 DISTANCE_FROM_TILE_EDGE_CM = 2.
 
+
+class Position(Enum):
+    NorthWest = "nw"
+    NorthEast = "ne"
+    SouthWest = "sw"
+    SouthEast = "se"
+
+
 class Tag:
+    id: int  # id of the april tag
+    position: Position  # position of tag on the tile
+    degrees: int  # the rotation of the tag in degrees from the origin.
+    # (a tag facing east in the classroom is 0, then goes clockwise)
+    world_tile: np.ndarray  # a vector of np array in the form of [[x],[y],[z]] where
 
-    def __init__(self, april_tag_id: int, coord: tuple[int, int], position: Position, rotation: int):
-        self.id = april_tag_id
-        self.coord = coord
-        self.tag_x_pos = coord[0]
-        self.tag_y_pos = coord[1]
-        self.position = position
-        self.rotation = rotation
+    # x is the north-south direction of the class
+    # y would be elevation, but is unused
+    # z is the east-west direction of the class
+    # the southeast corner of the lab is [[0],[y],[0]] and increases north and west
 
-    def get_position(self):
-        """ Returns the position as a (x, y) in cm and theta in degrees
+    # global_position: np.ndarray  # a vector of np array in the form of [[x],[y],[z]]
 
-        Calculates it given the
-            april_tag_id,
-            coordinate of the tile the tag is on in x,y in tiles
-            the position of the tag in the tile
-            rotation in degrees. 0 is the TV at the front of the room (for Auto Lab at ISU)
+    def __init__(self, april_tag_id: int, tile_position: Position, degrees: int, world_tile: np.ndarray):
+        self.id: int = april_tag_id
+        self.position: Position = tile_position
+        self.degrees: int = degrees
+        self.world_tile: np.ndarray = world_tile
 
-            # >>> Tag(380, (4, 1), Position.top_right, 135)
-
+    def get_tag_location(self):
+        """
+        gets the tag's location in meters
+        :return: the location of the tag in meters as a np vector in the form np.array( [[x],[y],[z]] )
         """
 
-        if self.position == Position.top_left:
-            x = self.tag_x_pos * TILE_LENGTH_CM + DISTANCE_FROM_TILE_EDGE_CM
-            y = (self.tag_y_pos + 1) * TILE_LENGTH_CM
-        elif self.position == Position.top_right:
-            x = (self.tag_x_pos + 1) * TILE_LENGTH_CM - 2 * DISTANCE_FROM_TILE_EDGE_CM
-            y = (self.tag_y_pos + 1) * TILE_LENGTH_CM - 2 * DISTANCE_FROM_TILE_EDGE_CM
-        elif self.position == Position.bot_right:
-            x = (self.tag_x_pos + 1) * TILE_LENGTH_CM - 2 * DISTANCE_FROM_TILE_EDGE_CM
-            y = self.tag_y_pos * TILE_LENGTH_CM
-        elif self.position == Position.bot_left:
-            x = self.tag_x_pos * TILE_LENGTH_CM
-            y = self.tag_y_pos * TILE_LENGTH_CM
-        else:
-            x = None
-            y = None
-            Exception("UNKNOWN POSITION WITHIN TILE")
 
-        return self.id, x, y, self.rotation
+def read_csv(filename) -> [Tag]:
+    tags = []
+    with open(filename) as csvfile:
+        tag_reader = csv.reader(csvfile)
+
+        # skip header row
+        next(tag_reader)
+
+        for row in tag_reader:
+            tag_id = int(row[0])
+            tag_x = int(row[1])
+            tag_y = int(row[2])
+            tile_position = Position(row[3])
+            degrees = int(row[4])
+
+            # tag y in this representation is actually the z axis in the coordinate system
+            location = np.array([[tag_x], [1], [tag_y]])
+            t = Tag(tag_id, tile_position, degrees, location)
+            # print(f"{t.id},{t.position},{t.degrees},{t.world_tile}")
+            # print(t)
+            tags.append(t)
+
+    return tags.sort(key=lambda x: x.id)
+
+
+# def main():
+#     read_csv("TagLocations.csv")
+#
+#
+# if __name__ == '__main__':
+#     main()

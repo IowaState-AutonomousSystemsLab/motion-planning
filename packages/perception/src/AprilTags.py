@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
                 line_count += 1
 
-    with open("TagLocations_cm.csv", "w") as tag_locations:
+    with open("TagLocations.csv", "w") as tag_locations:
         tag_location_writer = csv.writer(tag_locations, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         tag_location_writer.writerow(["Tag ID", "x_cm", "y_cm", "theta"])
         for tag in tags:
