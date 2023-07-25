@@ -63,11 +63,3 @@ def read_csv(filename) -> [Tag]:
             tags.append(t)
 
     return tags.sort(key=lambda x: x.id)
-
-
-# def main():
-#     read_csv("TagLocations.csv")
-#
-#
-# if __name__ == '__main__':
-#     main()
