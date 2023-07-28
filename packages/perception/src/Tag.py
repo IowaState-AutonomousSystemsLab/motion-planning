@@ -7,6 +7,9 @@ DISTANCE_FROM_TILE_EDGE_CM = 2.
 
 
 class Position(Enum):
+    """
+    this is actually unused and all are treated the same
+    """
     NorthWest = "nw"
     NorthEast = "ne"
     SouthWest = "sw"
@@ -38,6 +41,8 @@ class Tag:
         gets the tag's location in meters
         :return: the location of the tag in meters as a np vector in the form np.array( [[x],[y],[z]] )
         """
+        # TODO make this function
+        return NotImplemented
 
 
 def read_csv(filename) -> [Tag]:
