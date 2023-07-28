@@ -114,41 +114,56 @@ class ATPoseEstimateNode(DTROS):
         self.image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
     def cb_camera_info(self, msg):
-        if self.camera_info is None:
-            rospy.loginfo("camera info is none, setting now")
-            # subscribing to the ros node seems to only give default values, so the commented out portion would work if
-            # the camera parameters in the node were correct
+        # TODO see if there is a way to get this from a ros node
+        # subscribing to the ros node seems to sometimes give default values, so some hard coded values are provided.
+        # hard coded values can be found from here http://duck<NUMBER>.local/dashboard/robot/calibrations#
+        # assuming that the duckiebot has had its intrinsic camera values calibrated
 
-            # p_arr = np.array(msg.P).reshape(3, 4)
-            # p0 = p_arr[0][0]
-            # p1 = p_arr[1][1]
-            # p2 = p_arr[0][2]
-            # p3 = p_arr[1][2]
-            # params = (p0,  # focal center x of rectified image
-            #           p1,  # focal center y of rectified image
-            #           p2,  # principal point x of rectified image
-            #           p3)  # principal point y of rectified image
-            # self.camera_info = params
-
-            # from duckiebot web interface:
-            # TODO see if there is a way to get this from a ros node,
-            # though it should, in theory, be the same for all the duckiebots
-            duckiebot_camera_matrix = np.array(
-                [[327.7921447753906, 0.0, 334.8615555610704, 0.0],
-                 [0.0, 353.49005126953125, 162.79261982972093, 0.0],
-                 [0.0, 0.0, 1.0, 0.0]])
-
-            params = (
-                duckiebot_camera_matrix[0][0],
-                duckiebot_camera_matrix[1][1],
-                duckiebot_camera_matrix[0][2],
-                duckiebot_camera_matrix[1][2]
-            )
-
-            self.camera_info = params
-            rospy.loginfo(f"camera params: {params}")
+        p_arr = np.array(msg.P).reshape(3, 4)
+        p0 = p_arr[0][0]
+        p1 = p_arr[1][1]
+        p2 = p_arr[0][2]
+        p3 = p_arr[1][2]
+        params = (p0,  # focal center x of rectified image
+                  p1,  # focal center y of rectified image
+                  p2,  # principal point x of rectified image
+                  p3)  # principal point y of rectified image
+        self.camera_info = params
         # This tuple is the relevant camera parameters needed for april-tag localization
         # for more info see https://docs.ros.org/en/api/sensor_msgs/html/msg/CameraInfo.html
+
+        if self.camera_info is None:
+            rospy.loginfo("camera info is none, setting now")
+
+            # the following camera matrices are the same size, just different forms
+            # # from duckiebot web interface:
+            # duckiebot3_camera_matrix = np.array(
+            #     [[327.7921447753906, 0.0, 334.8615555610704, 0.0],
+            #      [0.0, 353.49005126953125, 162.79261982972093, 0.0],
+            #      [0.0, 0.0, 1.0, 0.0]])
+            #
+            # duckiebot7_camera_matrix = np.array([
+            #     279.17230224609375,
+            #     0.0,
+            #     320.78572866467584,
+            #     0.0,
+            #     0.0,
+            #     303.0921325683594,
+            #     183.80956181106376,
+            #     0.0,
+            #     0.0,
+            #     0.0,
+            #     1.0,
+            #     0.0
+            # ]).reshape((3, 4))
+            #
+            # params = (
+            #     duckiebot7_camera_matrix[0][0],
+            #     duckiebot7_camera_matrix[1][1],
+            #     duckiebot7_camera_matrix[0][2],
+            #     duckiebot7_camera_matrix[1][2]
+            # )
+            # self.camera_info = params
 
     def lookup(self, id):
         """
