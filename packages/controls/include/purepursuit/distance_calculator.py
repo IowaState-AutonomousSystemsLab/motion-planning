@@ -1,7 +1,7 @@
 import math
 from .point import Point
 
-class DistanceCalcualtor:
+class DistanceCalcultor:
     """
     Interface for calculating the distance between two points
     """
@@ -9,7 +9,7 @@ class DistanceCalcualtor:
     def calculate_distance(point1: Point, point2: Point):
         raise NotImplementedError()
 
-class EuclideanDistanceCalculator(DistanceCalcualtor):
+class EuclideanDistanceCalculator(DistanceCalcultor):
     """
     Calculates the euclidean distance between two points
     """
