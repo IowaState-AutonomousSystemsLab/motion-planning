@@ -9,10 +9,13 @@ import rospy
 from duckietown.dtros import DTROS, NodeType
 from std_msgs.msg import String, Header
 from duckietown_msgs.msg import WheelsCmdStamped
-from include.pid import PID
+from include.PIDF import PIDF
 from as_msgs.msg import WheelOdometry
 
 class SpeedControlNode(DTROS):
+    """
+
+    """
 
     def __init__(self, node_name):
         # initialize the DTROS parent class
@@ -23,8 +26,8 @@ class SpeedControlNode(DTROS):
         self.right_speed = 0
         self.left_goal = 0.1
         self.right_goal = 0.1
-        self.left_pid = PID(1,1,0.03,0)
-        self.right_pid = PID(1,1,0.03,0)
+        self.left_pid = PIDF(1,1,0.03,0)
+        self.right_pid = PIDF(1,1,0.03,0)
 
         self.left_pid.set(self.left_goal)
         self.right_pid.set(self.right_goal)

@@ -5,13 +5,11 @@ import rospy
 import cv2
 import numpy as np
 
-# from datetime import datetime
-
-import sys
 import os
 from pathlib import Path
 from sensor_msgs.msg import Imu
-import rostopic
+from include.PIDF import PIDF
+from as_msgs.msg import WheelOdometry
 
 
 class HeadingTracker():
@@ -23,6 +21,10 @@ class HeadingTracker():
         self.imu_sub = rospy.Subscriber("/duck7/imu_node/data", Imu, callback=self.integrate)
         self.wheel_pub = rospy.Publisher(f"/{os.environ['VEHICLE_NAME']}/wheels_driver_node/wheels_cmd", WheelsCmdStamped, queue_size=1)
         self.odometery_sub = rospy.Subscriber(f"~wheel_odometry/odometry",WheelOdometry,self.odometry_cb)
+
+        #Whel speed PIDs
+        self.left_pid = PIDF(1,1,0.03,0)
+        self.right_pid = PIDF(1,1,0.03,0)
 
         #Wheel Speeds
         self.left_wheel_sub = rospy.Subscriber("/duck7/")
