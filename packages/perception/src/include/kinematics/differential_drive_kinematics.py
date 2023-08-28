@@ -5,7 +5,7 @@ import numpy as np
 from typing import Tuple
 
 #how close to zero should equal zero
-sigma = 0.00001
+sigma = 0.0001
 
 """
 Class implements forward kinematics for differential drive
@@ -40,7 +40,7 @@ class DifferentialDriveKinematics():
         R = (0.5 * self.width * (1 + ratio)) / (1 - ratio)
         return R
 
-    def calculate_angular_veloctiy(self,
+    def calculate_angular_velocity(self,
                                    vel_left,
                                    vel_right):
         """
@@ -56,6 +56,24 @@ class DifferentialDriveKinematics():
         """
         R = self.calculate_radius(vel_left, vel_right)
         return vel_right / (R + 0.5 * self.width)
+    
+    def calculate_wheel_speeds_from_angular_velocity(self, vel_left, vel_right, angular_velocity:float):
+        """
+            if angular velocity is positive, it's a counter-clockwise/left turn, right wheel is faster
+        """
+        offset = self.width * angular_velocity / 2
+
+        
+        if angular_velocity > sigma:
+            return (vel_left - offset, vel_right + offset)
+        elif angular_velocity < -1 * sigma:
+            return (vel_left + offset, vel_right - offset)
+        elif abs(angular_velocity) <= sigma:
+            return (0.5, 0.5)
+        else:
+            print("THIS CONDITION SHOULD NEVER BE REACHED")
+
+
 
     def calculate_ICC(self,
                       vel_left: float,

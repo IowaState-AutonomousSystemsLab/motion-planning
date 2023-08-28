@@ -1,0 +1,16 @@
+from include.purepursuit.controller import Controller
+import rospy
+
+class DuckiebotController_Orientation(Controller):
+    """
+    Assuming we get robot orientation information from somewhere,
+    we will move until the robot negates the error
+    """
+    def __init__(self) -> None:
+        self.wheel_speed_subscriber = rospy.Subscriber("")
+
+    def minimize(error: float):
+        """
+        +ve error means counter clockwise
+        -ve error means clockwise
+        """

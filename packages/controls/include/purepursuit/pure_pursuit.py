@@ -54,7 +54,8 @@ class PurePursuit:
         return min_idx
 
     def find_goal_point(self, pos: Point, nearest_idx: int) -> Point:
-        
+        """
+        """
         #for all points ahead and including the nearest one on the path
         for i, point in enumerate(self.path[nearest_idx:]):
             dist = self.distance_calculator.calculate_distance(pos, point)
