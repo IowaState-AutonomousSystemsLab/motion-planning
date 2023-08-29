@@ -15,14 +15,28 @@ from as_msgs.msg import WheelOdometry
 from std_msgs.msg import Header
 from duckietown_msgs.msg import WheelsCmdStamped
 from offset_calculator import OffsetCalculator
+from include.differential_drive_kinematics import DifferentialDriveKinematics
 
 
 class HeadingTracker():
     def __init__(self):
         rospy.loginfo("Initializing")
 
-        #PID init
-        self.ref = 0
+        #Robot params      -------- CHANGE THIS  ---------       
+        self.robot_width = 25.4     # in cm
+        self.wheel_radius = 2.12    # in cm
+
+        self.heading_kP = 0.02
+        self.heading_kI = 0
+        self.heading_kD = 0
+
+        self.left_wheel_kP = 0.02
+        self.left_wheel_kI = 0
+        self.left_wheel_kD = 0
+
+        self.right_wheel_kP = 0.02
+        self.right_wheel_kI = 0
+        self.right_wheel_kD = 0
 
         # IMU ---------------------------CHANGE THIS WITH OPTITRACK HEADING--------------------------------------------
         self.heading = 0
@@ -37,8 +51,11 @@ class HeadingTracker():
         self.wheel_pub = rospy.Publisher(f"/{os.environ['VEHICLE_NAME']}/wheels_driver_node/wheels_cmd", WheelsCmdStamped, queue_size=1)
 
         #Wheel speed PIDs
-        self.left_pid = PIDF(1,0,0.03,0)
-        self.right_pid = PIDF(1,0,0.03,0)
+        self.prev_heading = 0
+        self.prev_speed = 0
+        self.left_pid  = PIDF(self.left_wheel_kP,  self.left_wheel_kI,  self.left_wheel_kD,  0)
+        self.right_pid = PIDF(self.right_wheel_kP, self.right_wheel_kI, self.right_wheel_kD, 0)
+        self.heading_pid = PIDF(self.heading_kP, self.heading_kI, self.heading_kD, 0)
 
         # rospy.loginfo("     CALCULATING IMU OFFSET")
         # offfset_calc = OffsetCalculator()
@@ -58,20 +75,32 @@ class HeadingTracker():
         rospy.logdebug(" + Heading Values = " + str(self.heading))
 
 
-    def track_heading(self):
+    def track_heading_and_speed(self, des_heading, curr_heading, des_speed, curr_speed):
         """
-        Uses a modified PID to track wheel speeds
+        based on https://ethz.ch/content/dam/ethz/special-interest/mavt/dynamic-systems-n-control/idsc-dam/Lectures/amod/AMOD_2020/20201019-05%20-%20ETHZ%20-%20Control%20in%20Duckietown%20(PID).pdf
+        des_heading = theta_r (theta_reference in the robot's frame of reference)
+        des_speed = V_r (velocity_reference in robot's frame of reference)
         """
         #CONSTANTS
-        kP = 0.02
+        dt = 0.01 # Should I calculate this value? self.rospy.Time
 
-        error = self.ref - self.heading
-        u = kP * error
-        rospy.logdebug(" + + PID Control inputs = " + str(u))
-        left_goal = self.left_speed + u
-        right_goal = self.right_speed - u
+        self.heading_pid.set(des_heading)
+        omega = self.heading_pid.update(curr_heading)
 
-        self.set_wheel_speeds(left_goal, right_goal)
+        left_goal  = des_speed + ((omega * self.length) / self.wheel_radius)
+        right_goal = des_speed - ((omega * self.length) / self.wheel_radius)
+
+        wheelsCmd = WheelsCmdStamped()
+        header = Header()
+        wheelsCmd.header = header
+        header.stamp = rospy.Time.now()
+        current_time = rospy.get_time()
+
+        self.left_pid.set(left_goal)
+        self.right_pid.set(right_goal)
+        wheelsCmd.vel_left = self.left_pid.update(left_goal, dt)
+        wheelsCmd.vel_right = self.right_pid.update(right_goal, dt)
+        self.wheel_pub.publish(wheelsCmd)
 
 
     def set_wheel_speeds(self, left_speed:float, right_speed:float):
