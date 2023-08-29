@@ -2,15 +2,12 @@
     
     <group ns="$(arg veh)">
 
-        <node pkg="perception" type="wheel_odometry_node.py" 
-              name="wheel_odometry"  output="screen">
-              <remap from="~/right_wheel_encoder_node/tick" 
-                     to="/$(arg veh)/right_wheel_encoder_node/tick"/>
-              <remap from="~/left_wheel_encoder_node/tick" 
-                     to="/$(arg veh)/left_wheel_encoder_node/tick"/>
+        <node pkg="perception" type="wheel_odometry_node.py" name="wheel_odometry"  output="screen">
+              <remap from="~/right_wheel_encoder_node/tick" to="/$(arg veh)/right_wheel_encoder_node/tick"/>
+              <remap from="~/left_wheel_encoder_node/tick"  to="/$(arg veh)/left_wheel_encoder_node/tick"/>
         </node>
 
-        <node pkg="perception" type="pose_estimate_node.py"/>
+        <!-- <node pkg="perception" type="pose_estimate_node.py"/> -->
     </group>
     
 </launch>

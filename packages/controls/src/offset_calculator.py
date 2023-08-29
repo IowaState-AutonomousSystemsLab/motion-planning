@@ -45,7 +45,7 @@ class OffsetCalculator():
         print(f"callback count: {self.callback_count}")
 
         # when time greater than 10.1 seconds, call imu_sub.unregister()
-        if rospy.get_rostime().secs - self.start_time >= 10:
+        if rospy.get_rostime().secs - self.start_time >= 30:
             print(f"x velocity offset = {self.x_velo/self.callback_count}")
             print(f"y velocity offset = {self.y_velo/self.callback_count}")
             print(f"z velocity offset = {self.z_velo/self.callback_count}")
