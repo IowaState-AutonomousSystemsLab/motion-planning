@@ -44,8 +44,8 @@ class HeadingTracker():
         self.imu_sub = rospy.Subscriber("/duck7/imu_node/data", Imu, callback=self.integrate)
         
         # IMU -------------------------- Add optitrack position --------------------------------------------
-        self.curr_pose = -255
-        self.pose_sub = rospy.Subscriber("<CHANGE THIS>", PoseStamped, callback = self.update_pos)
+        self.curr_pose = 0
+        self.pose_sub = rospy.Subscriber("<CHANGE THIS>", PoseStamped, callback = self.update_pose)
 
         #Wheel speed speed tracking
         self.left_speed  = -255
@@ -61,8 +61,11 @@ class HeadingTracker():
         self.heading_pid = PIDF(self.heading_kP, self.heading_kI, self.heading_kD, 0)
         
         #Globals
-        x_ref = -255
-        y_ref = -255
+        self.x_ref = -255
+        self.y_ref = -255
+        self.w_ref = 0
+        self.v_ref = 0
+
 
         # rospy.loginfo("     CALCULATING IMU OFFSET")
         # offfset_calc = OffsetCalculator()
@@ -81,8 +84,8 @@ class HeadingTracker():
         self.heading = self.heading + (self.truncate(imu_out.angular_velocity.x, 4) - 0.005)
         rospy.logdebug(" + Heading Values = " + str(self.heading))
 
-    def update_pos(seld, data):
-        pass
+    def update_pose(self, data):
+        self.curr_pose = data
 
     def track_heading_and_speed(self, des_heading, curr_heading, des_speed, curr_speed):
         """
@@ -94,10 +97,10 @@ class HeadingTracker():
         dt = 0.01 # Should I calculate this value? self.rospy.Time
 
         self.heading_pid.set(des_heading)
-        omega = self.heading_pid.update(curr_heading)
+        # omega = self.heading_pid.update(curr_heading)
 
-        left_goal  = des_speed + ((omega * self.length) / self.wheel_radius)
-        right_goal = des_speed - ((omega * self.length) / self.wheel_radius)
+        left_goal  = des_speed + ((self.w_ref * self.length) / 2)
+        right_goal = des_speed - ((self.w_ref * self.length) / 2)
 
         wheelsCmd = WheelsCmdStamped()
         header = Header()
@@ -116,9 +119,17 @@ class HeadingTracker():
         self.y_ref = y_ref
         
     def track_point(self):
-        pass
-        
+        #get distance between current point to goal point(Lookout distance)
+        lookout_dist = math.sqrt((self.x_ref - self.curr_pose.x)**2 + (self.y_ref - self.curr_pose.y)**2)
 
+        # et the error in heading 
+        alpha = self.heading - math.atan((self.y_ref - self.curr_pose.y)/(self.x_ref - self.curr_pose.x))
+
+        #radius of the arc
+        R = lookout_dist/2*math.sin(alpha)
+
+        #calculate angular reference velocity from linear reference velocity
+        self.w_ref = self.v_ref/R
 
     def set_wheel_speeds(self, left_speed:float, right_speed:float):
         
