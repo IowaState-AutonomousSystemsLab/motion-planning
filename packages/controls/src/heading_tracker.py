@@ -136,6 +136,7 @@ class HeadingTracker():
         self.y_ref = y_ref
         
     def track_point(self):
+        # TODO add a conditional that ssays when Goal is reached, call a different method
         #get distance between current point to goal point(Lookout distance)
         lookout_dist = math.sqrt((self.x_ref - self.curr_pose.x)**2 + (self.y_ref - self.curr_pose.y)**2)
 
@@ -147,8 +148,6 @@ class HeadingTracker():
 
         #calculate angular reference velocity from linear reference velocity
         self.w_ref = self.v_ref/R
-        # TODO add a conditional that ssays when Goal is reached, call a different method
-        pass
 
 
     def set_wheel_speeds(self, left_speed:float, right_speed:float):
