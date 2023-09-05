@@ -13,6 +13,7 @@ from include.PIDF import PIDF
 from sensor_msgs.msg import Imu
 from as_msgs.msg import WheelOdometry
 from std_msgs.msg import Header
+from geometry_msgs.msg import PoseStamped
 from duckietown_msgs.msg import WheelsCmdStamped
 from offset_calculator import OffsetCalculator
 from include.differential_drive_kinematics import DifferentialDriveKinematics
@@ -41,6 +42,10 @@ class HeadingTracker():
         # IMU ---------------------------CHANGE THIS WITH OPTITRACK HEADING--------------------------------------------
         self.heading = 0
         self.imu_sub = rospy.Subscriber("/duck7/imu_node/data", Imu, callback=self.integrate)
+        
+        # IMU -------------------------- Add optitrack position --------------------------------------------
+        self.curr_pose = -255
+        self.pose_sub = rospy.Subscriber("<CHANGE THIS>", PoseStamped, callback = self.update_pos)
 
         #Wheel speed speed tracking
         self.left_speed  = -255
@@ -51,11 +56,13 @@ class HeadingTracker():
         self.wheel_pub = rospy.Publisher(f"/{os.environ['VEHICLE_NAME']}/wheels_driver_node/wheels_cmd", WheelsCmdStamped, queue_size=1)
 
         #Wheel speed PIDs
-        self.prev_heading = 0
-        self.prev_speed = 0
         self.left_pid  = PIDF(self.left_wheel_kP,  self.left_wheel_kI,  self.left_wheel_kD,  0)
         self.right_pid = PIDF(self.right_wheel_kP, self.right_wheel_kI, self.right_wheel_kD, 0)
         self.heading_pid = PIDF(self.heading_kP, self.heading_kI, self.heading_kD, 0)
+        
+        #Globals
+        x_ref = -255
+        y_ref = -255
 
         # rospy.loginfo("     CALCULATING IMU OFFSET")
         # offfset_calc = OffsetCalculator()
@@ -74,6 +81,8 @@ class HeadingTracker():
         self.heading = self.heading + (self.truncate(imu_out.angular_velocity.x, 4) - 0.005)
         rospy.logdebug(" + Heading Values = " + str(self.heading))
 
+    def update_pos(seld, data):
+        pass
 
     def track_heading_and_speed(self, des_heading, curr_heading, des_speed, curr_speed):
         """
@@ -101,6 +110,14 @@ class HeadingTracker():
         wheelsCmd.vel_left = self.left_pid.update(left_goal, dt)
         wheelsCmd.vel_right = self.right_pid.update(right_goal, dt)
         self.wheel_pub.publish(wheelsCmd)
+        
+    def set_point_to_track(self, x_ref, y_ref):
+        self.x_ref = x_ref
+        self.y_ref = y_ref
+        
+    def track_point(self):
+        pass
+        
 
 
     def set_wheel_speeds(self, left_speed:float, right_speed:float):
@@ -118,7 +135,7 @@ class HeadingTracker():
     def run(self):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            self.track_heading()
+            self.track_heading_and_speed()
             rate.sleep()
 
 
