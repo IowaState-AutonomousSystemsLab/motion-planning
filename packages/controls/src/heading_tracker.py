@@ -64,7 +64,7 @@ class HeadingTracker():
         self.x_ref = -255
         self.y_ref = -255
         self.w_ref = 0
-        self.v_ref = 0
+        self.v_ref = 0 
 
 
         # rospy.loginfo("     CALCULATING IMU OFFSET")
@@ -122,7 +122,7 @@ class HeadingTracker():
         #get distance between current point to goal point(Lookout distance)
         lookout_dist = math.sqrt((self.x_ref - self.curr_pose.x)**2 + (self.y_ref - self.curr_pose.y)**2)
 
-        # et the error in heading 
+        #get the error in heading 
         alpha = self.heading - math.atan((self.y_ref - self.curr_pose.y)/(self.x_ref - self.curr_pose.x))
 
         #radius of the arc
