@@ -8,7 +8,11 @@ from as_msgs.msg import WheelOdometry, Pose
 from include.kinematics.differential_drive_kinematics import DifferentialDriveKinematics
 
 class PoseEstimateNode(DTROS):
-    def __init__(self, node_name) -> None:
+    """To estimate the pose of the robot using the wheel odometry
+    """
+    def __init__(self, 
+                 node_name: str) -> None:
+        
         super(PoseEstimateNode, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
         
         self.kinematics = DifferentialDriveKinematics(0.1085)
@@ -35,6 +39,11 @@ class PoseEstimateNode(DTROS):
         self.log("Initalized!")
 
     def odometry_cb(self, odoMsg):
+        """Once odometry is published, this method automatically calulates the new pose of the robot
+
+        Args:
+            odoMsg (as_msgs/msg/OdometryMsg)
+        """
         self.x, self.y, self.heading = self.kinematics.calculate_new_pose(
             self.x,
             self.y,

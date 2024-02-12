@@ -5,22 +5,20 @@ import numpy as np
 from typing import Tuple
 
 #how close to zero should equal zero
-sigma = 0.0001
+sigma = 0.00001
 
-"""
-Class implements forward kinematics for differential drive
+"""Class implements forward kinematics for differential drive
 """
 class DifferentialDriveKinematics():
 
     def __init__(self,
-                 robot_width):
+                 robot_width: float):
         self.width = robot_width
 
     def calculate_radius(self,
                          vel_left: float,
                          vel_right: float) -> float:
-        """
-        Calculates the radius of the turn
+        """Calculates the radius of the turn
 
         Arguments:
             vel_left: the velocity of the left wheel
@@ -40,11 +38,10 @@ class DifferentialDriveKinematics():
         R = (0.5 * self.width * (1 + ratio)) / (1 - ratio)
         return R
 
-    def calculate_angular_velocity(self,
+    def calculate_angular_veloctiy(self,
                                    vel_left,
                                    vel_right):
-        """
-        Calculate the angular velocity of a turn
+        """Calculate the angular velocity of a turn
 
         Arguments:
             length: the distance between the wheels
@@ -56,24 +53,6 @@ class DifferentialDriveKinematics():
         """
         R = self.calculate_radius(vel_left, vel_right)
         return vel_right / (R + 0.5 * self.width)
-    
-    def calculate_wheel_speeds_from_angular_velocity(self, vel_left, vel_right, angular_velocity:float):
-        """
-            if angular velocity is positive, it's a counter-clockwise/left turn, right wheel is faster
-        """
-        offset = self.width * angular_velocity / 2
-
-        
-        if angular_velocity > sigma:
-            return (vel_left - offset, vel_right + offset)
-        elif angular_velocity < -1 * sigma:
-            return (vel_left + offset, vel_right - offset)
-        elif abs(angular_velocity) <= sigma:
-            return (0.5, 0.5)
-        else:
-            print("THIS CONDITION SHOULD NEVER BE REACHED")
-
-
 
     def calculate_ICC(self,
                       vel_left: float,
@@ -81,8 +60,7 @@ class DifferentialDriveKinematics():
                       heading: float,
                       x: float, 
                       y: float) -> Tuple[float, float]:
-        """
-        Calculates the Instantaneous Center of Curvature 
+        """Calculates the Instantaneous Center of Curvature 
 
         Arguments:
             radius: the radius of the turn
@@ -105,6 +83,19 @@ class DifferentialDriveKinematics():
                            vel_left: float,
                            vel_right: float,
                            dt: float) -> Tuple[float, float, float]:
+        """Calculates the pose of the robot given Wheel Odometry
+
+        Args:
+            x (float): x in the global coordinate frame
+            y (float): y in the global coordinate frame
+            heading (float): heading in the global coordinate frame w.r.t the starting heading of the robot
+            vel_left (float): the current velocity of the left wheel
+            vel_right (float): the current velocity of the right wheel
+            dt (float): <CHECK, I'M NOT SURE> the time difference between successive odometry messages
+
+        Returns:
+            Tuple[float, float, float]: _description_
+        """
         dr = vel_right * dt
         dl = vel_left * dt
 
