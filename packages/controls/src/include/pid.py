@@ -16,7 +16,7 @@ class PID:
         error = self.setpoint - current
         dervative = (error - self.prevError)/dt
         self.integral += error*dt
-        power = self.kP * error + self.kI * self.integral + self.kD * derivative
+        power = self.kP * error + self.kI * self.integral + self.kD * dervative
         self.prevError = error
 
         return power
