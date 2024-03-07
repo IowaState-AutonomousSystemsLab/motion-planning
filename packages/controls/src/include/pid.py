@@ -14,7 +14,7 @@ class PID:
 
     def update(self,current,dt):
         error = self.setpoint - current
-        dervative = (error - self.prevError)/dt
+        derivative = (error - self.prevError)/dt
         self.integral += error*dt
         power = self.kP * error + self.kI * self.integral + self.kD * derivative
         self.prevError = error
