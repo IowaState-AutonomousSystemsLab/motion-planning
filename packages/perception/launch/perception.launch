@@ -11,7 +11,8 @@
         </node>
 
         <node pkg="perception" type="pose_estimate_node.py"
-              name = "pose_estimate"  output="screen">
+              name="pose_estimate"  output="screen">
+        </node>
     </group>
     
 </launch>
