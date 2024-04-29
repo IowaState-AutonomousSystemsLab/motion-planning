@@ -13,6 +13,10 @@
         <node pkg="perception" type="pose_estimate_node.py"
               name="pose_estimate"  output="screen">
         </node>
+
+        <node pkg="perception" type="filtered_odoPose_node.py"
+              name="filtered_odoPose"  output="screen">
+        </node>
     </group>
     
 </launch>
