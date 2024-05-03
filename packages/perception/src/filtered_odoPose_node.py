@@ -7,7 +7,7 @@ from std_msgs.msg import String, Header
 from as_msgs.msg import WheelOdometry, Pose
 from sensor_msgs.msg import Imu
 from include.kinematics.differential_drive_kinematics import DifferentialDriveKinematics
-from include.kalman.py import kalman
+from include.kalman.kalman import kalman
 
 class filtered_odoPose_node(DTROS):
     def __init__(self, node_name) -> None:
