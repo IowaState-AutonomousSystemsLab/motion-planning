@@ -5,7 +5,7 @@ import numpy as np
 class kalman():
 
     def __init__(self, R):
-        self.R = R # Radius of the wheel in meters
+        self.Radius = R # Radius of the wheel in meters
     #VARIABLES THAT NEED INITIALIZED
         self.dt = 1 # time step, in seconds, refresh rate of 60 Hz
         self.var = 2 # variance for the process error of calculating P
@@ -46,6 +46,7 @@ class kalman():
                                     #           [0., 0., 0., 1., 0.],  # variance squared for velocity
                                     #           [0., 0., 0., 0., 1.]]) # variance squared for angular velocity
             # Error Matrix for calculating P
+            # TODO: Put variance back in for this noise matrix
         self.odoPose.Q = Q_discrete_white_noise(dim = 5, dt = self.dt, var = self.var)
 
         # Create the State Prediction matrixs
@@ -53,14 +54,14 @@ class kalman():
         self.odoPose.F = np.array([1., 0., 0., self.dt*np.cos(np.deg2rad(self.theta)), 0.],
                                   [0., 1., 0., self.dt*np.sin(np.deg2rad(self.theta)), 0.],
                                   [0., 0., 1., 0., 0.],
-                                  [0., 0., 0., ((self.R/2)*(self.vr + self.vl)), 0.],
+                                  [0., 0., 0., ((self.Radius/2)*(self.vr + self.vl)), 0.],
                                   [0., 0., 0., 0., 1.])
             # Create the Control Transition matrix
         self.odoPose.B = np.array([[0., 0.],
                                    [0., 0.],
                                    [0., 0.],
-                                   [(self.R/2), (self.R/2)],
-                                   [(self.R/self.L), (-self.R/self.L)]])
+                                   [(self.Radius/2), (self.Radius/2)],
+                                   [(self.Radius/self.L), (-self.Radius/self.L)]])
             # Control Vector
         self.u = np.array([[self.vr],
                            [self.vl]])
@@ -74,7 +75,7 @@ class kalman():
                                    [1., 1.]])
             # Measurement noise
         # TODO: Check what this is
-        self.y = np.array([[1., 0., 0., 0., 0.],
+        self.R = np.array([[1., 0., 0., 0., 0.],
                            [0., 1., 0., 0., 0.],
                            [0., 0., 1., 0., 0.],     # measured value through testing
                            [0., 0., 0., 1., 0.],
