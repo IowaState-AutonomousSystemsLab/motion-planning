@@ -12,27 +12,12 @@ from include.kalman.py import kalman
 class filtered_odoPose_node(DTROS):
     def __init__(self, node_name) -> None:
         super(filtered_odoPose_node, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
-
-        self.previous_state = np.zeros(5,1)
-        self.P_variable = np.eye(5,5) # used to store P values between creation and update
-
+    # Obtaining Radius and Initializing Kalman Class    
         self.R = rospy.get_param(f"/{os.environ['VEHICLE_NAME']}/kinematics_node/radius", 100) # Wheel radius using parameter request from pose_estimate_node
-        self.L = .1085 # length between wheel centers, in meters
-        x0 = np.array([[0.], # x position
-                       [0.], # y position
-                       [0.], # theta (in degrees)
-                       [0.], # velocity magnitude
-                       [0.]])# angular velocity
-        p0 = np.array([[1., 0., 0., 0., 0.], # variance squared for x position
-                       [0., 1., 0., 0., 0.], # variance squared for y position
-                       [0., 0., 1., 0., 0.], # variance squared for heading
-                       [0., 0., 0., 1., 0.], # variance squared for velocity
-                       [0., 0., 0., 0., 1.]])# variance squared for angular velocity
-        
-        self.kalman = kalman(self, dt = 1, var = 5, R = self.R, L = self.L, x0 = x0, p0 = p0) # values that initial the filter
+        self.kalman = kalman(self, R = self.R) # values that initial the filter
 
-        # Function that creates kalman matrices based on initialized values
-        kalman.create_matrices(self, x0[0], x0[1], x0[2], x0[3], x0[4], self.x0)
+    # Creates Kalman Matrices 
+        kalman.create_matrices(self, self.kalman.x0, self.kalman.wheel0, self.kalman.p0)
 
 # Subscribers and Publishers
         #create subscriber to the pose_estimate (get x, y, theta)
@@ -63,9 +48,11 @@ class filtered_odoPose_node(DTROS):
             Pose,
             queue_size = 1
         )
-# Initializer
+
+# Initialize Message
         self.previous_time = None
         self.log("Initialized!")
+
 #Subscriber Callbacks        
     def odoPose_cb(self, poseMsg):
         # Unpack odoPose message into x, y, z
@@ -82,28 +69,21 @@ class filtered_odoPose_node(DTROS):
         self.vr_measure = wheelMsg.right_wheel_velocity
         self.vl_measure = wheelMsg.left_wheel_velocity
         self.v_measure = ((self.R/2)*(self.vr_measure+self.vl_measure))
-
+        self.wheel = ([[self.vr_measure],
+                       [self.vl_measure]])
+        
         z = np.array([[self.x_measure],
                       [self.y_measure],
                       [self.theta_measure],
                       [self.v_measure],
                       [self.imu_w]])
-        x_state = self.previous_state
-        P = self.P_variable
-        
-        '''
-        The previous_state variable is an attempt to store the previous state of the agent
-        in a temporary varaible that allows us to feed it back into the filter. Because all
-        of the matrices must be recalculated and run in callback functions, the temprorary 
-        variable stores the previous state value outside of that process, allowing us to access
-        it even as the kalman filter is constantly iterating
-        '''
 
-        self.previous_state = self.kalman.predict_and_update(self, z, x_state)
-        self.x, self.y, self.theta, self.v, self.w = self.previous_state
+        # TODO: Fix the inputs of the predict and update function
+        self.previous_x, self.previous_P = self.kalman.predict_and_update(self, z, self.kalman.odoPose.x)
+        self.x, self.y, self.theta, self.v, self.w = self.previous_x
         
-        #Utilize previous state code to get matrix X
-        kalman.create_matrices(self, x_state[0], x_state[1], x_state[2], x_state[3], x_state[4], self.x_state, self.P_variable)
+        #Create New set of matrices to be used in next iteration
+        kalman.create_matrices(self, self.previous_x, self.wheel, self.previous_P)
 
         # Creates Pose message to publish
         pose_msg = Pose()
