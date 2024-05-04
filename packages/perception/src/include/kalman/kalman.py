@@ -46,7 +46,6 @@ class kalman():
                                     #           [0., 0., 0., 1., 0.],  # variance squared for velocity
                                     #           [0., 0., 0., 0., 1.]]) # variance squared for angular velocity
             # Error Matrix for calculating P
-            # TODO: Put variance back in for this noise matrix
         self.odoPose.Q = Q_discrete_white_noise(dim = 5, dt = self.dt, var = self.var)
 
         # Create the State Prediction matrixs
