@@ -12,6 +12,7 @@ from include.kalman.kalman import kalman
 class filtered_odoPose_node(DTROS):
     def __init__(self, node_name) -> None:
         super(filtered_odoPose_node, self).__init__(node_name=node_name, node_type=NodeType.GENERIC)
+    
     # Obtaining Radius and Initializing Kalman Class    
         self.R = rospy.get_param(f"/{os.environ['VEHICLE_NAME']}/kinematics_node/radius", 100) # Wheel radius using parameter request from pose_estimate_node
         self.kalman = kalman(self, R = self.R) # values that initial the filter
@@ -54,32 +55,59 @@ class filtered_odoPose_node(DTROS):
         self.log("Initialized!")
 
 #Subscriber Callbacks        
-    def odoPose_cb(self, poseMsg):
+    def odoPose_cb(self, poseMsg:Pose):
+        """ Callback functino for when an OdoPose message is published
+
+        Args:
+                poseMsg (Pose): automatically supplied OdoPose message
+        
+        """
         # Unpack odoPose message into x, y, z
         self.x_measure = poseMsg.x
         self.y_measure = poseMsg.y
         self.theta_measure = poseMsg.heading
         
-    def imu_cb(self, Imu):
+    def imu_cb(self, imuMessage:Imu):
+        """ Callback functino when an Imu message is published
+        
+        Args:
+                Imu (Imu): Automatically supplied Imu message
+        """
         #angular velocity about the z axis
-        self.imu_w = Imu.angular_velocity.z
+        self.imu_w = imuMessage.angular_velocity.z
 
     def filter_cb(self, wheelMsg):
-        #write code that makes matrix z
+        """Callback funtion when wheelMsg is published
+        This function creates the measurement update z for the kalman filter. It 
+        also houses the prediction step of the filter, and then publishes a message to
+        the filtered_position topic
+
+
+        Args:
+                wheelMsg (wheel): Automatically supplied when message is published
+        """
+        # Unpacks the wheel velocity messages
         self.vr_measure = wheelMsg.right_wheel_velocity
         self.vl_measure = wheelMsg.left_wheel_velocity
+
+        # Calculates the velocity
         self.v_measure = ((self.R/2)*(self.vr_measure+self.vl_measure))
+        
+        # Creates a vector of the wheel velocities to be used in matrix calculation
         self.wheel = ([[self.vr_measure],
                        [self.vl_measure]])
         
+        # Create measurement matrix Z
         z = np.array([[self.x_measure],
                       [self.y_measure],
                       [self.theta_measure],
                       [self.v_measure],
                       [self.imu_w]])
 
-        # TODO: Fix the inputs of the predict and update function
+        # Run predict and update to obtain state estimate
         self.previous_x, self.previous_P = self.kalman.predict_and_update(self, z, self.kalman.odoPose.x)
+        
+        # Unpack state into state variables
         self.x, self.y, self.theta, self.v, self.w = self.previous_x
         
         #Create New set of matrices to be used in next iteration
