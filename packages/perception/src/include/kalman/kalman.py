@@ -53,7 +53,7 @@ class kalman():
             # State Transition Matrix F, or A
         self.odoPose.F = np.array([1., 0., 0., self.dt*np.cos(np.deg2rad(self.theta)), 0.],
                                   [0., 1., 0., self.dt*np.sin(np.deg2rad(self.theta)), 0.],
-                                  [0., 0., 1., 0., 0.],
+                                  [0., 0., 1., 0., self.dt],
                                   [0., 0., 0., ((self.Radius/2)*(self.vr + self.vl)), 0.],
                                   [0., 0., 0., 0., 1.])
             # Create the Control Transition matrix
