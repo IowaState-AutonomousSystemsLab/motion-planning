@@ -24,13 +24,23 @@ class kalman():
                                 [0.]]) # left wheel velocity
 
     def create_matrices(self, x_current, wheel, P_current):
+        """function used to create matrices for the kalman filter
+        Some of the matrices will stay the same but some will update based on
+        new velocities.
+
+        This function also creates the kalman filter instance
+        Args:
+                x_current : Current State matrix, x, y, heading, velocity, angular velocity
+                wheel     : right and left wheel velocities in vector form
+                P_current : Current Covariance matrix
         
+        """
         self.x, self.y, self.theta, self.v, self.w = x_current
         self.vr, self.vl = wheel
         self.P_current = P_current
 
         # Create KalmanFilter object
-        self.odoPose = KalmanFilter(dim_x = 5, dim_z = 1) 
+        self.odoPose = KalmanFilter(dim_x = 5, dim_z = 1, dim_u = 2) 
 
         # Initialize matrixes x and P
             # row vector of the initial state, if using later use transpose
@@ -73,25 +83,31 @@ class kalman():
                                    [1., 0.],
                                    [1., 1.]])
             # Measurement noise
-        # TODO: Check what this is
         self.R = np.array([[1., 0., 0., 0., 0.],
                            [0., 1., 0., 0., 0.],
                            [0., 0., 1., 0., 0.],     # measured value through testing
                            [0., 0., 0., 1., 0.],
                            [0., 0., 0., 0., 1.]])
 
-        self.odoPose.noise = 5
-    # TODO: Fix the predict and update function to include control inputs
     def predict_and_update(self, z, x_state):
+        """function that is used to run the predict and update for
+        the kalman filter.
 
+        Args:
+                z : measurement matrix
+                x_state : current system state
+        
+        """
         self.z = z # makes the measurements obtained usable
         self.x_state = x_state # makes state obtained usable
         
         # Prediction step using matrices created and u, B matrices
-        self.x_pred, self.P_pred = kalman.predict(x_state, self.odoPose.P, self.odoPose.F, self.odoPose.Q, u=self.u, B=self.B)
+        # NOTE: Might need the state and P taken out to work properly
+        self.x_pred, self.P_pred = kalman.predict(self, self.x_state, self.odoPose.P, u=self.u, B = self.odoPose.B, F = self.odoPose.F, Q = self.odoPose.Q)
         
-        # Update new state and return 
-        self.new_x, self.new_P = kalman.update(self.x_pred, self.P_pred, self.z, self.R, self.odoPose.H)
+        # Update new state and return values
+        # NOTE: Might need the state and P taken out to work properly
+        self.new_x, self.new_P = kalman.update(self, self.x_state, self.odoPose.P, self.z, R = self.R, H = self.odoPose.H)
 
         return self.new_x, self.new_P
     # For the control vector u, its used as an argument for the predict
