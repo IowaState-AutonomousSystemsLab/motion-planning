@@ -1,14 +1,13 @@
 from filterpy.kalman import KalmanFilter
-from filterpy.common import Q_discrete_white_noise
+from scipy.stats import norm
 import numpy as np
 
 class kalman():
-
     def __init__(self, R):
         self.Radius = R # Radius of the wheel in meters
     #VARIABLES THAT NEED INITIALIZED
         self.dt = 1 # time step, in seconds, refresh rate of 60 Hz
-        self.var = 2 # variance for the process error of calculating P
+        self.var = 1 # variance for the process error of calculating P
         self.L = .01875 # Distance between the two wheels
         self.x0 = np.array([[0.], # x position
                             [0.], # y position
@@ -40,7 +39,7 @@ class kalman():
         self.P_current = P_current
 
         # Create KalmanFilter object
-        self.odoPose = KalmanFilter(dim_x = 5, dim_z = 1, dim_u = 2) 
+        self.odoPose = KalmanFilter(dim_x = 5, dim_z = 5, dim_u = 2) 
 
         # Initialize matrixes x and P
             # row vector of the initial state, if using later use transpose
@@ -56,15 +55,16 @@ class kalman():
                                     #           [0., 0., 0., 1., 0.],  # variance squared for velocity
                                     #           [0., 0., 0., 0., 1.]]) # variance squared for angular velocity
             # Error Matrix for calculating P
-        self.odoPose.Q = Q_discrete_white_noise(dim = 5, dt = self.dt, var = self.var)
+        noise_matrix_size = (5, 5)
+        self.odoPose.Q = norm.rvs(loc=10, scale=self.var, size=noise_matrix_size)
 
         # Create the State Prediction matrixs
             # State Transition Matrix F, or A
-        self.odoPose.F = np.array([1., 0., 0., self.dt*np.cos(np.deg2rad(self.theta)), 0.],
-                                  [0., 1., 0., self.dt*np.sin(np.deg2rad(self.theta)), 0.],
-                                  [0., 0., 1., 0., self.dt],
-                                  [0., 0., 0., ((self.Radius/2)*(self.vr + self.vl)), 0.],
-                                  [0., 0., 0., 0., 1.])
+        self.odoPose.F = np.array([[1., 0., 0., float(self.dt*np.cos(np.deg2rad(self.theta))), 0.],
+                                  [0., 1., 0., float(self.dt*np.sin(np.deg2rad(self.theta))), 0.],
+                                  [0., 0., 1., 0., float(self.dt)],
+                                  [0., 0., 0., float(((self.Radius/2)*(self.vr + self.vl))), 0.],
+                                  [0., 0., 0., 0., 1.]])
             # Create the Control Transition matrix
         self.odoPose.B = np.array([[0., 0.],
                                    [0., 0.],
@@ -72,16 +72,16 @@ class kalman():
                                    [(self.Radius/2), (self.Radius/2)],
                                    [(self.Radius/self.L), (-self.Radius/self.L)]])
             # Control Vector
-        self.u = np.array([[self.vr],
-                           [self.vl]])
+        self.u = np.array([[float(self.vr)], 
+                           [float(self.vl)]])
         
         # Creation of the Measurement Update
             # Create the Measurement function
-        self.odoPose.H = np.array([[1., 0.],
-                                   [1., 0.],      
-                                   [1., 0.],
-                                   [1., 0.],
-                                   [1., 1.]])
+        self.odoPose.H = np.array([[1., 0., 0., 0., 0.],
+                                   [0., 1., 0., 0., 0.], 
+                                   [0., 0., 1., 0., 0.],
+                                   [0., 0., 0., 1., 0.], 
+                                   [0., 0., 0., 0., 1.]])
             # Measurement noise
         self.R = np.array([[1., 0., 0., 0., 0.],
                            [0., 1., 0., 0., 0.],
@@ -103,11 +103,10 @@ class kalman():
         
         # Prediction step using matrices created and u, B matrices
         # NOTE: Might need the state and P taken out to work properly
-        self.x_pred, self.P_pred = kalman.predict(self, self.x_state, self.odoPose.P, u=self.u, B = self.odoPose.B, F = self.odoPose.F, Q = self.odoPose.Q)
+        self.odoPose.predict(u = self.u, B = self.odoPose.B, F = self.odoPose.F, Q = self.odoPose.Q)
         
         # Update new state and return values
         # NOTE: Might need the state and P taken out to work properly
-        self.new_x, self.new_P = kalman.update(self, self.x_state, self.odoPose.P, self.z, R = self.R, H = self.odoPose.H)
+        self.odoPose.update(z = self.z, R = self.R, H = self.odoPose.H)
 
         return self.new_x, self.new_P
-    # For the control vector u, its used as an argument for the predict
